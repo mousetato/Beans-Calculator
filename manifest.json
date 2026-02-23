@@ -1,5 +1,5 @@
 {
-  "name": "咖啡豆成本计算器",
+  "name": "咖啡豆价格计算器",
   "short_name": "咖啡豆计算",
   "description": "计算咖啡豆单杯价格与出品杯数的工具",
   "start_url": "./index.html",
@@ -13,4 +13,5 @@
       "type": "image/png"
     }
   ]
+
 }
