@@ -2,8 +2,14 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>咖啡豆价格计算器</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4B3832">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <style>
         :root {
             --dark-coffee: #4B3832;
@@ -14,13 +20,14 @@
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background-color: #F8F5F2;
             padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
             color: var(--dark-coffee);
+            margin: 0;
         }
 
         .card, .history-card {
@@ -38,7 +45,6 @@
 
         .content { padding: 20px; }
         
-        /* 输入区样式 */
         .field { margin-bottom: 15px; }
         label { display: block; font-size: 0.85rem; color: var(--medium-roast); margin-bottom: 6px; font-weight: bold; }
         input {
@@ -48,7 +54,6 @@
         }
         input:focus { border-color: var(--accent); }
 
-        /* 快捷克数按钮 */
         .chips-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
         .chip {
             padding: 6px 12px; background: #eee; border-radius: 20px;
@@ -58,45 +63,31 @@
         .chip:hover { background: var(--latte); color: white; }
         .chip.active { background: var(--accent); color: white; }
 
-        /* 结果显示区 */
         .result-group { 
             background: var(--cream); padding: 15px; border-radius: 12px; 
             margin-top: 20px; border: 1px dashed var(--latte);
         }
         .result-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .result-row:last-child { margin-bottom: 0; }
         .value-text { color: var(--accent); font-weight: 800; font-size: 1.5rem; }
 
         .save-btn {
             width: 100%; padding: 14px; background: var(--dark-coffee); color: white;
             border: none; border-radius: 8px; font-weight: bold; cursor: pointer; 
-            margin-top: 15px; font-size: 1rem; transition: opacity 0.2s;
+            margin-top: 15px; font-size: 1rem;
         }
-        .save-btn:active { opacity: 0.8; }
 
-        /* 历史记录表格 */
         .history-card { padding: 20px; box-sizing: border-box; }
         .history-card h3 { margin-top: 0; font-size: 1rem; color: var(--medium-roast); border-bottom: 1px solid #eee; padding-bottom: 10px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th { text-align: left; color: #999; font-weight: normal; padding: 10px 5px; }
         td { padding: 12px 5px; border-bottom: 1px solid #f9f9f9; }
-        .del-btn { color: #cc7a6f; cursor: pointer; background: none; border: none; font-size: 0.8rem; }
+        .del-btn { color: #cc7a6f; cursor: pointer; background: none; border: none; }
     </style>
-    <script>
-  // 注册 Service Worker
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('SW 注册成功'))
-        .catch(err => console.log('SW 注册失败', err));
-    });
-  }
-    </script>
 </head>
 <body>
 
 <div class="card">
-    <div class="header"><h2>☕ Beans Calculator</h2></div>
+    <div class="header"><h2>☕ Beans CALC</h2></div>
     <div class="content">
         <div class="field">
             <label>咖啡豆名称</label>
@@ -141,32 +132,35 @@
     <h3>📜 历史对比记录</h3>
     <table id="historyTable">
         <thead>
-            <tr><th>豆子名称</th><th>杯数</th><th>单杯价</th><th>操作</th></tr>
+            <tr><th>名称</th><th>杯数</th><th>单杯价</th><th>操作</th></tr>
         </thead>
-        <tbody id="historyBody">
-            </tbody>
+        <tbody id="historyBody"></tbody>
     </table>
 </div>
 
 <script>
-    // 初始化时加载历史数据
+    // 1. 注册 Service Worker 逻辑
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('SW Registered'))
+                .catch(err => console.log('SW Registration Failed', err));
+        });
+    }
+
+    // 2. 业务逻辑计算
     window.onload = renderHistory;
 
     function calculate() {
         const p = parseFloat(document.getElementById('price').value) || 0;
         const g = parseFloat(document.getElementById('grams').value) || 0;
         const d = parseFloat(document.getElementById('dose').value) || 0;
-        
-        // 杯数：去尾法取整
         const cups = d > 0 ? Math.floor(g / d) : 0;
-        // 单杯价格：价格/杯数
         const cost = cups > 0 ? (p / cups).toFixed(2) : "0.00";
-
         document.getElementById('cups').innerText = cups;
         document.getElementById('cost').innerText = cost;
     }
 
-    // 快捷克数选择逻辑
     function selectGrams(val, el) {
         document.getElementById('grams').value = val;
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
@@ -174,34 +168,23 @@
         calculate();
     }
 
-    // 手动输入克数时，清除快捷按钮的高亮
     function manualInputGrams() {
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
         calculate();
     }
 
-    // 保存记录到本地
     function saveRecord() {
-        const name = document.getElementById('name').value || '未命名的豆子';
+        const name = document.getElementById('name').value || '未命名';
         const cups = document.getElementById('cups').innerText;
         const cost = document.getElementById('cost').innerText;
-
-        if (cups === "0") {
-            alert("请输入有效的数据后再保存");
-            return;
-        }
-
-        const record = { id: Date.now(), name, cups, cost };
+        if (cups === "0") return alert("请先输入有效数据");
         const history = JSON.parse(localStorage.getItem('coffeeRecords') || '[]');
-        history.unshift(record);
+        history.unshift({ id: Date.now(), name, cups, cost });
         localStorage.setItem('coffeeRecords', JSON.stringify(history));
-        
         renderHistory();
-        // 清空名称输入框方便下一次输入
         document.getElementById('name').value = '';
     }
 
-    // 渲染历史记录列表
     function renderHistory() {
         const history = JSON.parse(localStorage.getItem('coffeeRecords') || '[]');
         const body = document.getElementById('historyBody');
@@ -215,19 +198,13 @@
         `).join('');
     }
 
-    // 删除单条记录
     function deleteRecord(id) {
-        if (!confirm('确定删除这条记录吗？')) return;
         let history = JSON.parse(localStorage.getItem('coffeeRecords') || '[]');
         history = history.filter(item => item.id !== id);
         localStorage.setItem('coffeeRecords', JSON.stringify(history));
         renderHistory();
     }
 </script>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4B3832">
-
 
 </body>
 </html>
-
