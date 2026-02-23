@@ -1,4 +1,4 @@
-const CACHE_NAME = 'coffee-calc-v1';
+const CACHE_NAME = 'beans-calc-v1';
 const ASSETS = [
   './',
   './index.html',
@@ -33,4 +33,5 @@ self.addEventListener('fetch', (event) => {
       return response || fetch(event.request);
     })
   );
+
 });
