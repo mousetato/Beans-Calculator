@@ -82,6 +82,16 @@
         td { padding: 12px 5px; border-bottom: 1px solid #f9f9f9; }
         .del-btn { color: #cc7a6f; cursor: pointer; background: none; border: none; font-size: 0.8rem; }
     </style>
+    <script>
+  // 注册 Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('SW 注册成功'))
+        .catch(err => console.log('SW 注册失败', err));
+    });
+  }
+</script>
 </head>
 <body>
 
@@ -217,16 +227,6 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#4B3832">
 
-<script>
-  // 注册 Service Worker
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('SW 注册成功'))
-        .catch(err => console.log('SW 注册失败', err));
-    });
-  }
-</script>
 
 </body>
 </html>
